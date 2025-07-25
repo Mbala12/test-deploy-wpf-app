@@ -45,12 +45,16 @@ jobs:
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
 
-      - name: Create and push tag
+      - name: Create Git tag
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          gh config set -h github.com git_protocol https
+          gh auth setup-git
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git tag ${{ steps.tag.outputs.tag_name }}
           git push origin ${{ steps.tag.outputs.tag_name }}
-
-    
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
