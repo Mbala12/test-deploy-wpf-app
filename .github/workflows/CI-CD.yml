@@ -1,0 +1,33 @@
+name: Build and Deploy WPF App
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x' # or your version
+
+      - name: Restore NuGet packages
+        run: dotnet restore
+
+      - name: Build the WPF application
+        run: dotnet build WpfMVVMProject.sln --configuration Release
+
+      - name: Publish app (self-contained Windows build)
+        run: dotnet publish WpfMVVMProject/WpfMVVMProject.csproj -c Release -r win-x64 --self-contained -o publish
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: WPFApp
+          path: publish/
