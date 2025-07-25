@@ -40,6 +40,13 @@ jobs:
           $tag = "${{ github.ref_name }}-$date-${{ github.run_number }}"
           echo "tag_name=$tag" >> $env:GITHUB_OUTPUT
 
+      - uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.PAT_TOKEN }}
+
+      - name: Fetch tags
+        run: git fetch --tags
+
       - name: Check if tag exists
         id: tag_exists
         shell: pwsh
@@ -47,9 +54,9 @@ jobs:
           $tag = "${{ steps.tag.outputs.tag_name }}"
           $exists = git ls-remote --tags origin $tag
           if ($exists) {
-            echo "exists=true" >> $env:GITHUB_OUTPUT
+            echo "exists=true" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
           } else {
-            echo "exists=false" >> $env:GITHUB_OUTPUT
+            echo "exists=false" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
           }
       
       - name: Configure Git
@@ -69,12 +76,15 @@ jobs:
           $count = 0
           do {
             try {
+              Write-Host "Attempting to push tag: $tag (try $($count + 1))"
               git tag $tag
               git push origin $tag
+              Write-Host "Tag pushed successfully."
               break
             }
             catch {
               $count++
+              Write-Host "Push failed. Retry attempt $count..."
               Start-Sleep -Seconds (5*$count)
             }
           } while ($count -lt $maxRetries)
