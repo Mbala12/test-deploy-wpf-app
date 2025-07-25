@@ -2,9 +2,7 @@ name: Build and Deploy WPF App
 
 on:
   push:
-    tags:
-      - 'v*'
-    
+    branches: [main]   
 
 jobs:
   build:
@@ -33,6 +31,24 @@ jobs:
         with:
           name: WPFApp
           path: publish/
+
+      - name: Generate tag name
+        id: tag
+        run: |
+          DATE=$(date +%Y-%m-%d)
+          TAG_NAME="${{ github.ref_name }}-${DATE}-${{ github.run_number }}"
+          echo "tag_name=$TAG_NAME" >> $GITHUB_OUTPUT
+
+      - name: Create Git tag
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh config set -h github.com git_protocol https
+          gh auth setup-git
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git tag ${{ steps.tag.outputs.tag_name }}
+          git push origin ${{ steps.tag.outputs.tag_name }}
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
