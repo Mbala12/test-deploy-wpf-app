@@ -34,10 +34,11 @@ jobs:
 
       - name: Generate tag name
         id: tag
+        shell: pwsh
         run: |
-          DATE=$(date +%Y-%m-%d)
-          TAG_NAME="${{ github.ref_name }}-${DATE}-${{ github.run_number }}"
-          echo "tag_name=$TAG_NAME" >> $GITHUB_OUTPUT
+          $date = Get-Date -Format "yyyy-MM-dd"
+          $tag = "${{ github.ref_name }}-$date-${{ github.run_number }}"
+          echo "tag_name=$tag" >> $env:GITHUB_OUTPUT
 
       - name: Create Git tag
         env:
