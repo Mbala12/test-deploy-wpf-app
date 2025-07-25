@@ -31,7 +31,4 @@ jobs:
         with:
           name: WPFApp
           path: publish/
-<<<<<<< HEAD
-      
-=======
->>>>>>> 9604f2df422b27925f2b434eb7f6c36eae881129
+
