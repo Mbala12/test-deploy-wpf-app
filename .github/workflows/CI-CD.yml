@@ -39,25 +39,20 @@ jobs:
           $date = Get-Date -Format "yyyy-MM-dd"
           $tag = "${{ github.ref_name }}-$date-${{ github.run_number }}"
           echo "tag_name=$tag" >> $env:GITHUB_OUTPUT
-          
-      - name: Set up Git identity
+      
+      - name: Configure Git
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
-
-      - name: Create Git tag
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Create and push tag
         run: |
-          gh config set -h github.com git_protocol https
-          gh auth setup-git
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git tag ${{ steps.tag.outputs.tag_name }}
           git push origin ${{ steps.tag.outputs.tag_name }}
-
+      
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          name: "Release ${{ github.run_number }}"
+          tag_name: ${{ steps.tag.outputs.tag_name }}
+          name: "Release ${{ steps.tag.outputs.tag_name }}"
           files: publish/**/*
