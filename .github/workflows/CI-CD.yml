@@ -1,4 +1,4 @@
-name: Build and Deploy WPF App
+name: Build and Release WPF App
 
 on:
   push:
@@ -32,25 +32,51 @@ jobs:
           name: WPFApp
           path: publish/
 
-      - name: Generate tag name
-        id: tag
+      - name: Check if tag exists
+        id: tag_exists
         shell: pwsh
         run: |
-          $date = Get-Date -Format "yyyy-MM-dd"
-          $tag = "${{ github.ref_name }}-$date-${{ github.run_number }}"
-          echo "tag_name=$tag" >> $env:GITHUB_OUTPUT
+          $tag = "${{ steps.tag.outputs.tag_name }}"
+          $exists = git ls-remote --tags origin $tag
+          if ($exists) {
+            echo "exists=true" >> $env:GITHUB_OUTPUT
+          } else {
+            echo "exists=false" >> $env:GITHUB_OUTPUT
+          }
       
       - name: Configure Git
+        env:
+          PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git remote set-url origin https://x-access-token:${PAT_TOKEN}@github.com/${{ github.repository }}.git
       
-      - name: Create and push tag
+      - name: Create and push tag with retries
+        if: steps.tag_exists.outputs.exists == 'false'
+        shell: pwsh
         run: |
-          git tag ${{ steps.tag.outputs.tag_name }}
-          git push origin ${{ steps.tag.outputs.tag_name }}
+          $tag = "${{ steps.tag.outputs.tag_name }}"
+          $maxRetries = 3
+          $count = 0
+          do {
+            try {
+              git tag $tag
+              git push origin $tag
+              break
+            }
+            catch {
+              $count++
+              Start-Sleep -Seconds (5*$count)
+            }
+          } while ($count -lt $maxRetries)
+          
+          if ($count -eq $maxRetries) {
+            throw "Failed to push tag after $maxRetries attempts"
+          }
       
       - name: Create GitHub Release
+        if: steps.tag_exists.outputs.exists == 'false'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.tag.outputs.tag_name }}
