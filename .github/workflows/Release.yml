@@ -27,9 +27,16 @@ jobs:
 
 
       - uses: actions/create-release@v1
+        id: create_release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tag_name: ${{ github.ref }}
           release_name: ${{ github.ref }}
+
+      - uses: csexton/release-asset-action@v2
+        with:
+          GITHUB-TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PATTERN: WpfMVVMProject/bin/Release/net8.0-windows/win-x64/publish/*.exe
+          RELEASE-URL: ${{ steps.create_release.outputs.upload_url }}
           
