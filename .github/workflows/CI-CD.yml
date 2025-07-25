@@ -32,6 +32,14 @@ jobs:
           name: WPFApp
           path: publish/
 
+      - name: Generate tag name
+        id: tag
+        shell: pwsh
+        run: |
+          $date = Get-Date -Format "yyyy-MM-dd"
+          $tag = "${{ github.ref_name }}-$date-${{ github.run_number }}"
+          echo "tag_name=$tag" >> $env:GITHUB_OUTPUT
+
       - name: Check if tag exists
         id: tag_exists
         shell: pwsh
